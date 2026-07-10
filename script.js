@@ -1,0 +1,223 @@
+const localPlayer = document.getElementById('localVideoPlayer');
+const ytContainer = document.getElementById('ytPlayerContainer');
+const mediaPlaceholder = document.getElementById('mediaPlaceholder');
+const seekSlider = document.getElementById('seekSlider');
+const volumeSlider = document.getElementById('volumeSlider');
+const statusMessage = document.getElementById('statusMessage');
+const clockDisplay = document.getElementById('clockDisplay');
+
+const hourHand = document.getElementById('hourHand');
+const minuteHand = document.getElementById('minuteHand');
+const secondHand = document.getElementById('secondHand');
+
+let ytPlayer = null;
+let activeSlot = 0; 
+let currentSourceType = 'none'; 
+let localFiles = {1: null, 2: null, 3: null}; 
+
+// ⭐ 각 차수별 적용 여부를 저장하는 변수 (기본값: false(미적용))
+let slotApplied = {1: false, 2: false, 3: false};
+
+// 초기화
+function initSystem() {
+    document.getElementById('startOverlay').style.display = 'none';
+    localPlayer.play().then(() => localPlayer.pause()).catch(e => {});
+    startScheduler();
+}
+
+// 유튜브 설정
+function onYouTubeIframeAPIReady() {
+    ytPlayer = new YT.Player('ytPlayerDiv', {
+        height: '100%', width: '100%',
+        playerVars: { 'autoplay': 0, 'controls': 0, 'rel': 0, 'disablekb': 1 },
+        events: {
+            'onReady': () => { ytPlayer.setVolume(volumeSlider.value * 100); },
+            'onStateChange': onYtStateChange
+        }
+    });
+}
+function onYtStateChange(event) {
+    if (event.data === YT.PlayerState.ENDED) {
+        ytPlayer.seekTo(0); ytPlayer.playVideo();
+    }
+}
+localPlayer.addEventListener('ended', () => {
+    localPlayer.currentTime = 0; localPlayer.play();
+});
+
+// UI 토글 (파일 vs 유튜브)
+function toggleInput(slot) {
+    const type = document.querySelector(`input[name="type${slot}"]:checked`).value;
+    if(type === 'file') {
+        document.getElementById(`file${slot}`).classList.remove('hidden');
+        document.getElementById(`yt${slot}`).classList.add('hidden');
+    } else {
+        document.getElementById(`file${slot}`).classList.add('hidden');
+        document.getElementById(`yt${slot}`).classList.remove('hidden');
+    }
+    // 적용된 상태라면 즉시 갱신
+    if(slotApplied[slot]) checkSchedule();
+}
+
+// 파일 업로드 이벤트
+[1, 2, 3].forEach(slot => {
+    document.getElementById(`file${slot}`).addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if(file) {
+            if(localFiles[slot]) URL.revokeObjectURL(localFiles[slot]);
+            localFiles[slot] = URL.createObjectURL(file);
+            if(slotApplied[slot] && activeSlot === slot) playSlot(slot); 
+        }
+    });
+});
+
+// 볼륨/진행률 제어
+volumeSlider.addEventListener('input', () => {
+    const vol = volumeSlider.value;
+    localPlayer.volume = vol;
+    if(ytPlayer && ytPlayer.setVolume) ytPlayer.setVolume(vol * 100);
+});
+seekSlider.addEventListener('input', () => {
+    if(activeSlot !== 0) {
+        const pct = seekSlider.value / 100;
+        if(currentSourceType === 'file' && localPlayer.duration) {
+            localPlayer.currentTime = pct * localPlayer.duration;
+        } else if(currentSourceType === 'youtube' && ytPlayer && ytPlayer.getDuration) {
+            ytPlayer.seekTo(pct * ytPlayer.getDuration(), true);
+        }
+    }
+});
+
+function extractYtId(url) {
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|.*\/|.*embed\/))([^&?\s]+)/);
+    return match ? match[1] : url.trim();
+}
+
+function stopAll() {
+    localPlayer.pause();
+    localPlayer.style.display = 'none';
+    ytContainer.style.display = 'none';
+    mediaPlaceholder.style.display = 'block';
+    if(ytPlayer && ytPlayer.pauseVideo) { try { ytPlayer.pauseVideo(); } catch(e){} }
+    currentSourceType = 'none';
+}
+
+function playSlot(slot) {
+    const type = document.querySelector(`input[name="type${slot}"]:checked`).value;
+    mediaPlaceholder.style.display = 'none';
+
+    if(type === 'file') {
+        const fileUrl = localFiles[slot];
+        if(fileUrl) {
+            currentSourceType = 'file';
+            localPlayer.src = fileUrl;
+            localPlayer.style.display = 'block';
+            localPlayer.play().catch(e => console.log(e));
+            statusMessage.innerText = `상태: ${slot}차 재생 중 🎵`;
+        } else {
+            mediaPlaceholder.style.display = 'block';
+            statusMessage.innerText = `상태: ${slot}차 대기 중 (파일 필요)`;
+        }
+    } else {
+        const rawUrl = document.getElementById(`yt${slot}`).value;
+        const ytId = extractYtId(rawUrl);
+        if(ytId && ytPlayer && ytPlayer.loadVideoById) {
+            currentSourceType = 'youtube';
+            ytContainer.style.display = 'block';
+            ytPlayer.loadVideoById(ytId);
+            statusMessage.innerText = `상태: ${slot}차 재생 중 📺`;
+        } else {
+            mediaPlaceholder.style.display = 'block';
+            statusMessage.innerText = `상태: ${slot}차 대기 중 (주소 필요)`;
+        }
+    }
+}
+
+// ⭐ [적용하기] 버튼 클릭 시
+function applySlot(slot) {
+    slotApplied[slot] = true;
+    const badge = document.getElementById(`statusBadge${slot}`);
+    badge.innerText = '🟢 적용됨';
+    badge.style.color = '#16a34a';
+    checkSchedule(); // 즉시 스케줄 확인
+}
+
+// ⭐ [중지하기] 버튼 클릭 시
+function stopSlot(slot) {
+    slotApplied[slot] = false;
+    const badge = document.getElementById(`statusBadge${slot}`);
+    badge.innerText = '🔴 미적용';
+    badge.style.color = '#ef4444';
+    checkSchedule(); // 즉시 스케줄 확인 및 재생 중지
+}
+
+// 스케줄 체크 로직
+function checkSchedule() {
+    const now = new Date();
+    const currentMins = now.getHours() * 60 + now.getMinutes();
+    let targetSlot = 0;
+
+    for(let i=1; i<=3; i++) {
+        // ⭐ 해당 차수가 [적용] 상태가 아니라면 시간 체크를 아예 무시함
+        if(!slotApplied[i]) continue; 
+
+        const sVal = document.getElementById(`start${i}`).value;
+        const eVal = document.getElementById(`end${i}`).value;
+        if(sVal && eVal) {
+            const [sh, sm] = sVal.split(':').map(Number);
+            const [eh, em] = eVal.split(':').map(Number);
+            const sMins = sh * 60 + sm;
+            const eMins = eh * 60 + em;
+
+            if(currentMins >= sMins && currentMins < eMins) {
+                targetSlot = i;
+                break;
+            }
+        }
+    }
+
+    if(targetSlot !== activeSlot) {
+        stopAll();
+        activeSlot = targetSlot;
+        if(activeSlot !== 0) playSlot(activeSlot);
+        else statusMessage.innerText = "상태: 설정된 시간이나 적용된 슬롯이 없습니다.";
+    }
+}
+
+// 타이머 루프
+function startScheduler() {
+    setInterval(() => {
+        const now = new Date();
+        
+        // 디지털 시계 업데이트
+        const hs = String(now.getHours()).padStart(2, '0');
+        const ms = String(now.getMinutes()).padStart(2, '0');
+        const ss = String(now.getSeconds()).padStart(2, '0');
+        clockDisplay.innerText = `${hs}:${ms}:${ss}`;
+
+        // 아날로그 시계 업데이트
+        const hRot = (now.getHours() % 12) * 30 + now.getMinutes() * 0.5;
+        const mRot = now.getMinutes() * 6;
+        const sRot = now.getSeconds() * 6;
+        hourHand.style.transform = `rotate(${hRot}deg)`;
+        minuteHand.style.transform = `rotate(${mRot}deg)`;
+        secondHand.style.transform = `rotate(${sRot}deg)`;
+
+        // 스케줄 체크
+        checkSchedule();
+
+        // 진행률 바 업데이트
+        if (activeSlot !== 0 && document.activeElement !== seekSlider) {
+            if(currentSourceType === 'file' && localPlayer.duration) {
+                seekSlider.value = (localPlayer.currentTime / localPlayer.duration) * 100;
+            } else if(currentSourceType === 'youtube' && ytPlayer && ytPlayer.getDuration) {
+                const dur = ytPlayer.getDuration();
+                if(dur > 0) seekSlider.value = (ytPlayer.getCurrentTime() / dur) * 100;
+            }
+        }
+    }, 1000);
+}
+
+window.onload = () => {
+    localPlayer.volume = 0.5;
+};

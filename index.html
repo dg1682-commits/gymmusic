@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>체력단련실 스마트 미디어 시스템</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- 시스템 시작 오버레이 -->
+    <div id="startOverlay" class="overlay">
+        <div class="overlay-content">
+            <h2>체력단련실 미디어 시스템</h2>
+            <p>브라우저 정책에 따라 활성화가 필요합니다.</p>
+            <button onclick="initSystem()" class="btn-start">시스템 시작하기</button>
+        </div>
+    </div>
+
+    <main class="app-container">
+        
+        <!-- 상단 대시보드 (좌: 시계, 우: 미디어) -->
+        <header class="dashboard-top">
+            
+            <!-- 좌측: 시계 패널 -->
+            <div class="clock-panel">
+                <div class="analog-clock">
+                    <div class="hand hour" id="hourHand"></div>
+                    <div class="hand minute" id="minuteHand"></div>
+                    <div class="hand second" id="secondHand"></div>
+                    <div class="center-dot"></div>
+                </div>
+                <div class="digital-clock" id="clockDisplay">00:00:00</div>
+                <div class="status-badge" id="statusMessage">상태: 대기 중...</div>
+            </div>
+
+            <!-- 우측: 미디어 패널 -->
+            <div class="media-panel">
+                <div class="media-screen">
+                    <div class="media-placeholder" id="mediaPlaceholder">🎵 설정 대기 중</div>
+                    <video id="localVideoPlayer" playsinline></video>
+                    <div id="ytPlayerContainer"><div id="ytPlayerDiv"></div></div>
+                </div>
+                <div class="controls-bar">
+                    <div class="control-item">
+                        <label>진행률</label>
+                        <input type="range" id="seekSlider" value="0" min="0" max="100" step="0.1">
+                    </div>
+                    <div class="control-item">
+                        <label>볼륨</label>
+                        <input type="range" id="volumeSlider" value="0.5" min="0" max="1" step="0.01">
+                    </div>
+                </div>
+            </div>
+
+        </header>
+
+        <!-- 하단: 스케줄 설정 영역 -->
+        <section class="schedule-section">
+            
+            <!-- 1차 재생 -->
+            <div class="schedule-card">
+                <div class="card-header">
+                    <div class="card-badge">1차 재생</div>
+                    <div class="slot-status" id="statusBadge1">🔴 미적용</div>
+                </div>
+                <div class="card-body">
+                    <div class="input-group time-group">
+                        <label>재생 시간대</label>
+                        <div class="time-inputs">
+                            <input type="time" id="start1" value="06:00"> <span class="divider">~</span> <input type="time" id="end1" value="08:00">
+                        </div>
+                    </div>
+                    <div class="input-group source-group">
+                        <div class="source-toggle">
+                            <label class="radio-label"><input type="radio" name="type1" value="file" checked onchange="toggleInput(1)"> 📁 파일 (MP3/MP4)</label>
+                            <label class="radio-label"><input type="radio" name="type1" value="youtube" onchange="toggleInput(1)"> 📺 유튜브 스트리밍</label>
+                        </div>
+                        <div class="source-input-box">
+                            <input type="file" id="file1" accept="audio/*, video/mp4" class="modern-input">
+                            <input type="text" id="yt1" class="hidden modern-input" placeholder="유튜브 주소를 붙여넣으세요">
+                        </div>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-apply" onclick="applySlot(1)">적용하기</button>
+                    <button class="btn-stop" onclick="stopSlot(1)">중지하기</button>
+                </div>
+            </div>
+
+            <!-- 2차 재생 -->
+            <div class="schedule-card">
+                <div class="card-header">
+                    <div class="card-badge">2차 재생</div>
+                    <div class="slot-status" id="statusBadge2">🔴 미적용</div>
+                </div>
+                <div class="card-body">
+                    <div class="input-group time-group">
+                        <label>재생 시간대</label>
+                        <div class="time-inputs">
+                            <input type="time" id="start2" value="11:00"> <span class="divider">~</span> <input type="time" id="end2" value="14:00">
+                        </div>
+                    </div>
+                    <div class="input-group source-group">
+                        <div class="source-toggle">
+                            <label class="radio-label"><input type="radio" name="type2" value="file" checked onchange="toggleInput(2)"> 📁 파일 (MP3/MP4)</label>
+                            <label class="radio-label"><input type="radio" name="type2" value="youtube" onchange="toggleInput(2)"> 📺 유튜브 스트리밍</label>
+                        </div>
+                        <div class="source-input-box">
+                            <input type="file" id="file2" accept="audio/*, video/mp4" class="modern-input">
+                            <input type="text" id="yt2" class="hidden modern-input" placeholder="유튜브 주소를 붙여넣으세요">
+                        </div>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-apply" onclick="applySlot(2)">적용하기</button>
+                    <button class="btn-stop" onclick="stopSlot(2)">중지하기</button>
+                </div>
+            </div>
+
+            <!-- 3차 재생 -->
+            <div class="schedule-card">
+                <div class="card-header">
+                    <div class="card-badge">3차 재생</div>
+                    <div class="slot-status" id="statusBadge3">🔴 미적용</div>
+                </div>
+                <div class="card-body">
+                    <div class="input-group time-group">
+                        <label>재생 시간대</label>
+                        <div class="time-inputs">
+                            <input type="time" id="start3" value="17:00"> <span class="divider">~</span> <input type="time" id="end3" value="19:00">
+                        </div>
+                    </div>
+                    <div class="input-group source-group">
+                        <div class="source-toggle">
+                            <label class="radio-label"><input type="radio" name="type3" value="file" checked onchange="toggleInput(3)"> 📁 파일 (MP3/MP4)</label>
+                            <label class="radio-label"><input type="radio" name="type3" value="youtube" onchange="toggleInput(3)"> 📺 유튜브 스트리밍</label>
+                        </div>
+                        <div class="source-input-box">
+                            <input type="file" id="file3" accept="audio/*, video/mp4" class="modern-input">
+                            <input type="text" id="yt3" class="hidden modern-input" placeholder="유튜브 주소를 붙여넣으세요">
+                        </div>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-apply" onclick="applySlot(3)">적용하기</button>
+                    <button class="btn-stop" onclick="stopSlot(3)">중지하기</button>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- 유튜브 API 및 JS -->
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script src="script.js"></script>
+</body>
+</html>
