@@ -8,7 +8,6 @@
 </head>
 <body>
 
-    <!-- 시스템 시작 오버레이 -->
     <div id="startOverlay" class="overlay">
         <div class="overlay-content">
             <h2>체력단련실 미디어 시스템</h2>
@@ -19,9 +18,7 @@
 
     <main class="app-container">
         
-        <!-- 상단 대시보드 (좌: 시계, 우: 미디어) -->
         <header class="dashboard-top">
-            
             <!-- 좌측: 시계 패널 -->
             <div class="clock-panel">
                 <div class="analog-clock">
@@ -34,7 +31,7 @@
                 <div class="status-badge" id="statusMessage">상태: 대기 중...</div>
             </div>
 
-            <!-- 우측: 미디어 패널 -->
+            <!-- 우측: 미디어 패널 및 히스토리 -->
             <div class="media-panel">
                 <div class="media-screen">
                     <div class="media-placeholder" id="mediaPlaceholder">🎵 설정 대기 중</div>
@@ -51,8 +48,15 @@
                         <input type="range" id="volumeSlider" value="0.5" min="0" max="1" step="0.01">
                     </div>
                 </div>
+                
+                <!-- ⭐ 최근 재생 히스토리 영역 -->
+                <div class="history-container">
+                    <h4>🕒 최근 재생한 유튜브 목록</h4>
+                    <ul id="historyList" class="history-list">
+                        <!-- 자바스크립트로 자동 생성됨 -->
+                    </ul>
+                </div>
             </div>
-
         </header>
 
         <!-- 하단: 스케줄 설정 영역 -->
@@ -151,7 +155,6 @@
         </section>
     </main>
 
-    <!-- 유튜브 API 및 JS -->
     <script src="https://www.youtube.com/iframe_api"></script>
     <script src="script.js"></script>
 </body>
