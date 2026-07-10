@@ -1,3 +1,4 @@
+/* 기본 테마 변수 설정 */
 :root {
     --bg-color: #f4f7f6;
     --card-bg: #ffffff;
@@ -84,10 +85,10 @@ body {
 }
 .status-badge { font-size: 14px; font-weight: 600; color: var(--text-muted); }
 
-/* 우측 미디어 패널 (사이즈 축소) */
+/* 우측 미디어 패널 */
 .media-panel {
     flex: 1.2;
-    max-width: 450px; /* 영상 크기 제한 */
+    max-width: 450px;
     background: var(--card-bg);
     padding: 20px;
     border-radius: var(--radius);
@@ -112,6 +113,28 @@ video, #ytPlayerContainer { width: 100%; height: 100%; object-fit: contain; disp
 .control-item { flex: 1; display: flex; align-items: center; gap: 10px; }
 .control-item label { font-weight: 600; font-size: 13px; color: var(--text-muted); min-width: 40px; }
 input[type="range"] { flex: 1; cursor: pointer; accent-color: var(--primary); }
+
+/* ⭐ 최근 재생 히스토리 영역 */
+.history-container { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px; }
+.history-container h4 { font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 10px; margin-top: 0; }
+.history-list { list-style: none; padding: 0; margin: 0; max-height: 140px; overflow-y: auto; }
+.history-list::-webkit-scrollbar { width: 6px; }
+.history-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+.history-item { 
+    display: flex; justify-content: space-between; align-items: center; 
+    background: #f8fafc; padding: 8px 12px; border-radius: 8px; margin-bottom: 8px; 
+    font-size: 13px; border: 1px solid var(--border);
+}
+.history-title { 
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+    max-width: 75%; font-weight: 600; color: var(--text-main); 
+}
+.btn-copy { 
+    background: var(--border); border: none; padding: 6px 12px; 
+    border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; 
+    color: var(--text-main); transition: 0.2s; 
+}
+.btn-copy:hover { background: var(--primary); color: white; }
 
 /* 스케줄 섹션 */
 .schedule-section { display: flex; flex-direction: column; gap: 20px; }
@@ -188,28 +211,3 @@ input[type="range"] { flex: 1; cursor: pointer; accent-color: var(--primary); }
     .media-panel { max-width: 100%; }
     .card-body { grid-template-columns: 1fr; gap: 20px; }
 }
-
-/* ⭐ 추가된 히스토리(최근 재생 목록) 스타일 */
-.history-container { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 15px; }
-.history-container h4 { font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 10px; margin-top: 0; }
-.history-list { list-style: none; padding: 0; margin: 0; max-height: 140px; overflow-y: auto; }
-
-/* 얇고 깔끔한 스크롤바 */
-.history-list::-webkit-scrollbar { width: 6px; }
-.history-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-
-.history-item { 
-    display: flex; justify-content: space-between; align-items: center; 
-    background: #f8fafc; padding: 8px 12px; border-radius: 8px; margin-bottom: 8px; 
-    font-size: 13px; border: 1px solid var(--border);
-}
-.history-title { 
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
-    max-width: 75%; font-weight: 600; color: var(--text-main); 
-}
-.btn-copy { 
-    background: var(--border); border: none; padding: 6px 12px; 
-    border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; 
-    color: var(--text-main); transition: 0.2s; 
-}
-.btn-copy:hover { background: var(--primary); color: white; }
